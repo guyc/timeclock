@@ -4,7 +4,7 @@ from gaugette.fonts import magneto_32
 class Oled:
     RESET_PIN = 15
     DC_PIN    = 16
-    CONTRAST  = 0x00   # 0 to 255, 255 is brighest
+    CONTRAST  = 0x00   # 0 to 255, 255 is brighest, min is still pretty bright
     
     def __init__(self):
         self.ssd1306 = gaugette.ssd1306.SSD1306(reset_pin=self.RESET_PIN, dc_pin=self.DC_PIN)
