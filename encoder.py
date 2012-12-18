@@ -5,15 +5,16 @@ import time
 
 class Encoder:
 
+    A_PIN  = 7
+    B_PIN  = 9
+    SW_PIN = 8
+
     class Monitor(threading.Thread):
         def run(self):
             while True:
                 self.encoder.delta += self.encoder.encoder.get_delta()
                 time.sleep(0.001)
             
-    A_PIN  = 7
-    B_PIN  = 9
-    SW_PIN = 8
     def __init__(self):
         self.encoder = gaugette.rotary_encoder.RotaryEncoder(self.A_PIN, self.B_PIN)
         self.switch = gaugette.switch.Switch(self.SW_PIN)
@@ -21,6 +22,7 @@ class Encoder:
 
     def start_monitor(self):
         self.monitor = self.Monitor()
+        self.monitor.daemon = True
         self.monitor.encoder = self
         self.monitor.start()
 

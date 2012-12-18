@@ -8,14 +8,15 @@ encoder.start_monitor()
 oled = Oled()
 ss = Spreadsheet()
 rgbled = RgbLed()
-rgbled.set(0,0,2)
+rgbled.set_actions([[0,0,2]])
 
 worksheet = ss.worksheet(1)
+rgbled.set_actions([[2,0,2]])
 projects = worksheet.get_list()
 for project in projects:
     print project
 
-rgbled.fade(0,0,100)
+rgbled.set_actions([[0,0,100,3600],1000,[0,0,10,3600],600])
 oled.display(projects[0]['name'])
 
 contrast = 0
