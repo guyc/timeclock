@@ -11,7 +11,7 @@ class RgbLed:
     class Worker(threading.Thread):
         def __init__(self, led):
             threading.Thread.__init__(self)
-            self.actions = [[0,0,0,200],[0,0,50,200]]  # initial pattern
+            self.actions = [[10,0,0,1000],[0,0,10,1000],[0,10,0,1000]]  # initial pattern
             self.condition = threading.Condition()
             self.daemon = True
             self.led = led
@@ -40,7 +40,7 @@ class RgbLed:
                     actions = self.actions
                     count = len(actions)
                     i = 0
-                    
+
                 action = actions[i]
                 i = (i + 1) % count
                 if hasattr(action, '__iter__'):
