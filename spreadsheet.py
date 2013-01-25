@@ -1,6 +1,8 @@
 import gaugette.oauth
 import gdata.service
 import datetime
+from functools import wraps
+
 
 class Spreadsheet:
     CLIENT_ID       = '911969952744.apps.googleusercontent.com'
@@ -8,6 +10,22 @@ class Spreadsheet:
     # TODO - find by name instead of key to make it generic.
     SPREADSHEET_KEY = '0Av8piskZzvGEdE0xZWt5LUhWZWFHajZRYV9WZWR6Qnc'
     TZ_OFFSET       = +10
+
+    def retry(self, f):
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except gdata.service.RequestError as error:
+                if error[0]['status'] == 401:
+                    # retry on timeout
+                    print "retrying"
+                    self.oauth.refresh_token()
+                    gd_client = self.get_gd_client(force=True)
+                    return f(*args, **kwargs)
+                else:
+                    raise
+        return f_retry
 
     class Worksheet:
         
@@ -86,7 +104,7 @@ class Spreadsheet:
         self.gd_client = None
         self.worksheets_feed = None
         self.spreadsheet_id = self.SPREADSHEET_KEY # REVISIT
-                
+
     def has_token(self):
         return self.oauth.has_token()
 
@@ -99,19 +117,15 @@ class Spreadsheet:
         return self.gd_client
 
     def get_worksheets_feed(self):
-        gd_client = self.get_gd_client()
+
         if self.worksheets_feed == None:
-            try:
-                self.worksheets_feed = gd_client.GetWorksheetsFeed(self.spreadsheet_id)
-            except gdata.service.RequestError as error:
-                if error[0]['status'] == 401:
-                    # retry on timeout
-                    self.oauth.refresh_token()
-                    gd_client = self.get_gd_client(force=True)
-                    self.worksheets_feed = gd_client.GetWorksheetsFeed(self.spreadsheet_id)
-                else:
-                    raise
-                    
+
+            @self.retry
+            def get_worksheets_feed_with_retry(spreadsheet):
+                gd_client = spreadsheet.get_gd_client()
+                return gd_client.GetWorksheetsFeed(spreadsheet.spreadsheet_id)
+            self.worksheets_feed = get_worksheets_feed_with_retry(self)
+            
         return self.worksheets_feed
 
 
