@@ -15,6 +15,9 @@ class Oled:
         self.font = magneto_32
         self.display("Gaugette")
 
+    def set_list(self, list):
+        self.list = self.ssd1306.ScrollingList(self.ssd1306, list, self.font)
+
     def display(self, text):
           self.ssd1306.clear_display()    
           self.ssd1306.draw_text3(0,0,text,self.font)

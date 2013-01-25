@@ -1,28 +1,86 @@
 import gaugette.oauth
 import gdata.service
+import datetime
 
 class Spreadsheet:
     CLIENT_ID       = '911969952744.apps.googleusercontent.com'
     CLIENT_SECRET   = 'fj7nrIP3AeYDFQDbewnWrmfM'
     # TODO - find by name instead of key to make it generic.
     SPREADSHEET_KEY = '0Av8piskZzvGEdE0xZWt5LUhWZWFHajZRYV9WZWR6Qnc'
+    TZ_OFFSET       = +10
 
     class Worksheet:
+        
+        class Row:
+            def __init__(self, worksheet, data=None):
+                self.spreadsheet = worksheet.spreadsheet
+                self.worksheet = worksheet
+
+                if isinstance(data, gdata.spreadsheet.SpreadsheetsList):
+                    self.entry = data
+                    self.data = {}
+                    for key in self.entry.custom:
+                        self.data[key] = self.entry.custom[key].text
+                elif isinstance(data, dict):
+                    self.entry = None
+                    self.data = data
+                else:
+                    self.entry = None
+                    self.data = {}
+
+            def __getitem__(self, key):
+                return self.data[key]
+
+            def __setitem__(self, key, value):
+                self.data[key] = value
+            
+            def update(self):
+                self.worksheet
+                gd_client = self.spreadsheet.get_gd_client()
+                gd_client.UpdateRow(self.entry, self.data)
+
+            def append(self):
+                gd_client = self.spreadsheet.get_gd_client()
+                self.entry = gd_client.InsertRow(self.data, self.spreadsheet.spreadsheet_id, self.worksheet.worksheet_id)
+
+        #----------------------------------------------------------------------        
+        
         def __init__(self, spreadsheet, worksheet_id):
             self.spreadsheet = spreadsheet
             self.worksheet_id = worksheet_id
 
-        def get_list(self):
+        def get_list_feed(self):
+             gd_client = self.spreadsheet.get_gd_client()
+             list_feed = gd_client.GetListFeed(self.spreadsheet.spreadsheet_id, self.worksheet_id)
+             return list_feed
+
+        def get_rows(self):
+            list_feed = self.get_list_feed()
+            rows = []
+            for i,entry in enumerate(list_feed.entry):
+                rows.append(self.Row(self, entry))
+            return rows
+
+        def get_last_row(self):
+            row = None
+            list_feed = self.get_list_feed()
+            if len(list_feed.entry)>0:
+                last_entry = list_feed.entry[-1]
+                row = self.Row(self, last_entry)
+            return row
+        
+        def append(self, row):
             gd_client = self.spreadsheet.get_gd_client()
-            list_feed = gd_client.GetListFeed(self.spreadsheet.spreadsheet_id, self.worksheet_id)
-            list = []
-            for i, entry in enumerate(list_feed.entry):
-                row = {}
-                for key in entry.custom:
-                    row[key] = entry.custom[key].text
-                list.append(row)    
-            return list
-            
+            gd_client.InsertRow(row, self.spreadsheet.spreadsheet_id) #, self.worksheet_id)
+
+        def gdate(self, utctime):
+            epoch = datetime.datetime(1900,1,1,0,0,0,0)  # epoch is actually 2 days before this
+            elapsed = utctime - epoch
+            gdate = elapsed.days + elapsed.seconds / (24.0 * 60 * 60) + Spreadsheet.TZ_OFFSET / 24.0 + 2
+            return str(gdate)
+
+    #----------------------------------------------------------------------        
+                
     def __init__(self):
         self.oauth = gaugette.oauth.OAuth(self.CLIENT_ID, self.CLIENT_SECRET)
         self.gd_client = None
@@ -105,6 +163,7 @@ class Spreadsheet:
 
     def worksheet(self, index=0):
         worksheets_feed = self.get_worksheets_feed()
+        #print worksheets_feed.entry[index]
         worksheet_id = worksheets_feed.entry[index].id.text.rsplit('/',1)[1]
         return self.Worksheet(self, worksheet_id)
         
