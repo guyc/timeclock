@@ -6,7 +6,6 @@ from gaugette.switch import Switch
 import wiringpi
 import time
 import datetime
-import utc
 
 gpio = wiringpi.GPIO(wiringpi.GPIO.WPI_MODE_PINS)
 
@@ -40,7 +39,6 @@ projects = project_worksheet.get_rows()
 project_names = []
 for project in projects:
     project_names.append(project['name'])
-print projects
 
 oled.set_list(project_names)
     
