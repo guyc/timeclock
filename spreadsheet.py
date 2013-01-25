@@ -53,13 +53,18 @@ class Spreadsheet:
                 self.data[key] = value
             
             def update(self):
-                self.worksheet
-                gd_client = self.spreadsheet.get_gd_client()
-                gd_client.UpdateRow(self.entry, self.data)
+                @self.spreadsheet.retry
+                def update_with_retry():
+                    gd_client = self.spreadsheet.get_gd_client()
+                    gd_client.UpdateRow(self.entry, self.data)
+                update_with_retry()
 
             def append(self):
-                gd_client = self.spreadsheet.get_gd_client()
-                self.entry = gd_client.InsertRow(self.data, self.spreadsheet.spreadsheet_id, self.worksheet.worksheet_id)
+                @self.spreadsheet.retry
+                def append_with_retry():
+                    gd_client = self.spreadsheet.get_gd_client()
+                    self.entry = gd_client.InsertRow(self.data, self.spreadsheet.spreadsheet_id, self.worksheet.worksheet_id)
+                append_with_retry()
 
         #----------------------------------------------------------------------        
         
@@ -68,9 +73,12 @@ class Spreadsheet:
             self.worksheet_id = worksheet_id
 
         def get_list_feed(self):
-             gd_client = self.spreadsheet.get_gd_client()
-             list_feed = gd_client.GetListFeed(self.spreadsheet.spreadsheet_id, self.worksheet_id)
-             return list_feed
+            @self.spreadsheet.retry
+            def get_list_feed_with_retry():
+                gd_client = self.spreadsheet.get_gd_client()
+                return gd_client.GetListFeed(self.spreadsheet.spreadsheet_id, self.worksheet_id)
+            list_feed = get_list_feed_with_retry()
+            return list_feed
 
         def get_rows(self):
             list_feed = self.get_list_feed()
@@ -88,8 +96,11 @@ class Spreadsheet:
             return row
         
         def append(self, row):
-            gd_client = self.spreadsheet.get_gd_client()
-            gd_client.InsertRow(row, self.spreadsheet.spreadsheet_id) #, self.worksheet_id)
+            @self.spreadsheet.retry
+            def append_with_retry():
+                gd_client = self.spreadsheet.get_gd_client()
+                return gd_client.InsertRow(row, self.spreadsheet.spreadsheet_id) #, self.worksheet_id)
+            return append_with_retry()
 
         def gdate(self, utctime):
             epoch = datetime.datetime(1900,1,1,0,0,0,0)  # epoch is actually 2 days before this
@@ -121,10 +132,10 @@ class Spreadsheet:
         if self.worksheets_feed == None:
 
             @self.retry
-            def get_worksheets_feed_with_retry(spreadsheet):
-                gd_client = spreadsheet.get_gd_client()
-                return gd_client.GetWorksheetsFeed(spreadsheet.spreadsheet_id)
-            self.worksheets_feed = get_worksheets_feed_with_retry(self)
+            def get_worksheets_feed_with_retry():
+                gd_client = self.get_gd_client()
+                return gd_client.GetWorksheetsFeed(self.spreadsheet_id)
+            self.worksheets_feed = get_worksheets_feed_with_retry()
             
         return self.worksheets_feed
 
