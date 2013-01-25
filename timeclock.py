@@ -91,19 +91,21 @@ while True:
             selected = oled.list.align()
             now = time_worksheet.gdate(datetime.datetime.utcnow())
 
+            ended_row = False
             # If there is an open record end it
             if last_row:  
                 last_row['finish'] = now
                 last_row.update()
-                last_row = None
 
             # if a new project was selected, start it
-            if selected != last_project_index:
+            if (not last_row) or (selected != last_project_index):
                 last_row = time_worksheet.Row(time_worksheet)
                 last_row['project'] = projects[selected]['name']
                 last_row['start'] = now
                 last_row.append()
                 last_project_index = selected
+            else:
+                last_row = None
                 
             idle = True
 
