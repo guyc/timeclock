@@ -52,30 +52,14 @@ if not last_row['finish']:
     last_project = last_row['project']
     try:
         last_project_index = project_names.index(last_project)
-        print [last_project, last_project_index]
         # Should select this project as the active one
-        print "scrolling ",last_project_index*oled.list.rows
         oled.list.scroll(last_project_index*oled.list.rows)
     except ValueError:
         # project is not in list!
-        print [last_project, project_names]
         last_row = None
 else:
     last_row = None
         
-if False:
-    list_feed = time_worksheet.get_list_feed()
-    last_entry = list_feed.entry[-1]
-    row = time_worksheet.Row(time_worksheet, last_entry)
-    print row['finish']
-    row['finish'] += 'ya'
-    print row['finish']
-    row.update()
-    #//row = timelog.get_last_row()
-    #//row['finish'] = 'Booyeah'
-    #//gd_client = ss.get_gd_client()
-    #//gd_client.UpdateRow(last_entry, row)
-
 rgbled.set_sequence([[0,0,50,2000],1000,[0,0,5,2000],600])
 
 idle = 0
@@ -103,10 +87,9 @@ while True:
     new_switch_state = switch.get_state()
     if new_switch_state != switch_state: 
         switch_state = new_switch_state
-        
-        if switch_state:
-            print "close"
-        else:
+        selected = oled.list.align()
+
+        if not switch_state:
             selected = oled.list.align()
             now = time_worksheet.gdate(datetime.datetime.utcnow())
 
