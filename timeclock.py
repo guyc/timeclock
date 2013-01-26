@@ -57,8 +57,14 @@ if not last_row['finish']:
         last_row = None
 else:
     last_row = None
-        
-rgbled.set_sequence([[0,0,50,2000],1000,[0,0,5,2000],600])
+
+active_sequence =   [[0,0,50,2000],1000,[0,0,5,2000],600]  
+idle_sequence   = [[20,0,20,500]]
+
+if last_row:
+    rgbled.set_sequence(active_sequence)
+else:
+    rgbled.set_sequence(idle_sequence)
 
 idle = 0
 idle_counter = 0
@@ -96,16 +102,22 @@ while True:
             if last_row:  
                 last_row['finish'] = now
                 last_row.update()
-
-            # if a new project was selected, start it
-            if (not last_row) or (selected != last_project_index):
+                last_row = None
+            else:
+                last_project_index = None
+                
+            # if either there was open row, or a new project is selected
+            if selected != last_project_index:
                 last_row = time_worksheet.Row(time_worksheet)
                 last_row['project'] = projects[selected]['name']
                 last_row['start'] = now
                 last_row.append()
                 last_project_index = selected
+                
+            if last_row:
+                rgbled.set_sequence(active_sequence)
             else:
-                last_row = None
+                rgbled.set_sequence(idle_sequence)
                 
             idle = True
 
