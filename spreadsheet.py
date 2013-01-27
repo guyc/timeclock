@@ -2,29 +2,33 @@ import gaugette.oauth
 import gdata.service
 import datetime
 from functools import wraps
-
+import httplib # only for httplib.BadStatusLine definition
 
 class Spreadsheet:
     CLIENT_ID       = '911969952744.apps.googleusercontent.com'
     CLIENT_SECRET   = 'fj7nrIP3AeYDFQDbewnWrmfM'
-    # TODO - find by name instead of key to make it generic.
-    SPREADSHEET_KEY = '0Av8piskZzvGEdE0xZWt5LUhWZWFHajZRYV9WZWR6Qnc'
-    TZ_OFFSET       = +10
+    TZ_OFFSET       = +10  # REVISIT - SET THIS IN SPREADSHEET ITSELF
 
     def retry(self, f):
         @wraps(f)
         def f_retry(*args, **kwargs):
-            try:
-                return f(*args, **kwargs)
-            except gdata.service.RequestError as error:
-                if error[0]['status'] == 401:
-                    # retry on timeout
-                    print "retrying"
-                    self.oauth.refresh_token()
-                    gd_client = self.get_gd_client(force=True)
+            retry = 1
+            while retry >= 0:
+                try:
                     return f(*args, **kwargs)
-                else:
-                    raise
+                except gdata.service.RequestError as error:
+                    if error[0]['status'] == 401:
+                        # retry on timeout
+                        print "token expired, retrying"
+                        self.oauth.refresh_token()
+                        gd_client = self.get_gd_client(force=True)
+                        retry -= 1
+                    else:
+                        raise
+                except httplib.BadStatusLine as error:
+                    print "bad status line, retrying"
+                    # this seems to happen after we are idle for a long time.
+                    # Just retry, and don't decrement the retry count
         return f_retry
 
     class Worksheet:
@@ -114,7 +118,6 @@ class Spreadsheet:
         self.oauth = gaugette.oauth.OAuth(self.CLIENT_ID, self.CLIENT_SECRET)
         self.gd_client = None
         self.worksheets_feed = None
-        self.spreadsheet_id = self.SPREADSHEET_KEY # REVISIT
 
     def has_token(self):
         return self.oauth.has_token()
@@ -126,6 +129,25 @@ class Spreadsheet:
         if self.gd_client == None or force:
             self.gd_client = self.oauth.spreadsheet_service()
         return self.gd_client
+
+    def get_spreadsheets_feed(self):
+
+        @self.retry
+        def get_worksheets_feed_with_retry():
+            gd_client = self.get_gd_client()
+            return gd_client.GetSpreadsheetsFeed()
+        worksheets_feed = get_worksheets_feed_with_retry()
+            
+        return worksheets_feed
+
+    def get_spreadsheet_by_name(self, name):
+        for entry in self.get_spreadsheets_feed().entry:
+            if name == entry.title.text:
+                self.spreadsheet_id = entry.id.text.rsplit('/',1)[1]
+                return self.spreadsheet_id
+            else:
+                print [name, entry.title.text]
+        return None
 
     def get_worksheets_feed(self):
 

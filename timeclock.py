@@ -31,7 +31,10 @@ oled.ssd1306.set_contrast(contrast)
 
 rgbled.set_sequence([[2,0,2]])
 
+SPREADSHEET_NAME = "Punch Clock"
 ss = Spreadsheet()
+if not ss.get_spreadsheet_by_name(SPREADSHEET_NAME):
+    print "Spreadsheet %s not found." % name
 
 time_worksheet = ss.worksheet(0)
 project_worksheet = ss.worksheet(1)
