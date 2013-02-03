@@ -16,12 +16,14 @@ rgbled = RgbLed.Worker(RGB_PIN_R, RGB_PIN_G, RGB_PIN_B)
 rgbled.set_sequence([[0,0,2]])
 rgbled.start()
 
+rgbled.set_sequence([[0,0,20]])
+
 ENCODER_PIN_A  = 7
-ENCODER_PIN_B  = 9
+ENCODER_PIN_B  = 8
 encoder = RotaryEncoder.Worker(ENCODER_PIN_A, ENCODER_PIN_B)
 encoder.start()
 
-SWITCH_PIN = 8
+SWITCH_PIN = 9
 switch = Switch(SWITCH_PIN)
 switch_state = switch.get_state()
 
@@ -62,7 +64,9 @@ else:
     last_row = None
 
 active_sequence =   [[0,0,50,2000],1000,[0,0,5,2000],600]  
-idle_sequence   = [[20,0,20,500]]
+going_active_sequence = [[0,0,50,0],[0,0,1,200],[0,0,50,200]]
+idle_sequence   = [[0,1,0]]
+going_idle_sequence = [[0,50,0,0],[0,1,0,200],[0,50,0,200]]
 
 if last_row:
     rgbled.set_sequence(active_sequence)
@@ -99,10 +103,11 @@ while True:
         if not switch_state:
             selected = oled.list.align()
             now = time_worksheet.gdate(datetime.datetime.utcnow())
-
+            
             ended_row = False
             # If there is an open record end it
-            if last_row:  
+            if last_row:
+                rgbled.set_sequence(going_idle_sequence)
                 last_row['finish'] = now
                 last_row.update()
                 last_row = None
@@ -111,6 +116,7 @@ while True:
                 
             # if either there was open row, or a new project is selected
             if selected != last_project_index:
+                rgbled.set_sequence(going_active_sequence)
                 last_row = time_worksheet.Row(time_worksheet)
                 last_row['project'] = projects[selected]['name']
                 last_row['start'] = now
