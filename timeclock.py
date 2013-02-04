@@ -65,8 +65,8 @@ else:
 
 active_sequence =   [[0,0,50,2000],1000,[0,0,5,2000],600]  
 going_active_sequence = [[0,0,50,0],[0,0,1,200],[0,0,50,200]]
-idle_sequence   = [[0,1,0]]
-going_idle_sequence = [[0,50,0,0],[0,1,0,200],[0,50,0,200]]
+idle_sequence   = [[1,0,1]]
+going_idle_sequence = [[50,0,50,0],[1,0,1,200],[50,0,50,200]]
 
 if last_row:
     rgbled.set_sequence(active_sequence)

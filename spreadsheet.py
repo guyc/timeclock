@@ -20,7 +20,9 @@ class Spreadsheet:
                     if error[0]['status'] == 401:
                         # retry on timeout
                         print "token expired, retrying"
-                        self.oauth.refresh_token()
+                        # note that Spreadsheet.refresh_token also invokes
+                        # this retry wrapper because it can get BadStatusLine errors.
+                        self.refresh_token()
                         gd_client = self.get_gd_client(force=True)
                         retry -= 1
                     else:
@@ -121,6 +123,14 @@ class Spreadsheet:
 
     def has_token(self):
         return self.oauth.has_token()
+
+    # We use the retry wrapper because sometime oauth.refresh_token()
+    # fails with a BadStatusLine exception.
+    def refresh_token(self):
+        @self.retry
+        def refresh_token_with_retry():
+            self.oauth.refresh_token()
+        refresh_token_with_retry()
 
     def get_user_code(self):
         return self.oauth.get_user_code()
