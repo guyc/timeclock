@@ -6,17 +6,24 @@ from gaugette.switch import Switch
 import wiringpi
 import time
 import datetime
+import gdata.service # for exception handling
 
 gpio = wiringpi.GPIO(wiringpi.GPIO.WPI_MODE_PINS)
 
 RGB_PIN_R = 6
 RGB_PIN_G = 5
 RGB_PIN_B = 4
-rgbled = RgbLed.Worker(RGB_PIN_R, RGB_PIN_G, RGB_PIN_B)
-rgbled.set_sequence([[0,0,2]])
-rgbled.start()
 
-rgbled.set_sequence([[0,0,20]])
+startup_sequence      = [[50,0,0,500],[50,50,0,500],[0,50,0,500],[0,50,50,500],[0,0,50,500],[50,0,50,500]]
+boot_sequence         = [[100,100,100]]
+active_sequence       = [[0,0,50,2000],1000,[0,0,5,2000],600]  
+going_active_sequence = [[0,0,50,0],[0,0,1,200],[0,0,50,200]]
+idle_sequence         = [[1,0,1]]
+going_idle_sequence   = [[50,0,50,0],[1,0,1,200],[50,0,50,200]]
+
+rgbled = RgbLed.Worker(RGB_PIN_R, RGB_PIN_G, RGB_PIN_B)
+rgbled.set_sequence(boot_sequence)
+rgbled.start()
 
 ENCODER_PIN_A  = 7
 ENCODER_PIN_B  = 8
@@ -31,7 +38,7 @@ oled = Oled()
 contrast = 0
 oled.ssd1306.set_contrast(contrast)
 
-rgbled.set_sequence([[2,0,2]])
+rgbled.set_sequence(startup_sequence)
 
 SPREADSHEET_NAME = "Punch Clock"
 ss = Spreadsheet()
@@ -62,11 +69,6 @@ if not last_row['finish']:
         last_row = None
 else:
     last_row = None
-
-active_sequence =   [[0,0,50,2000],1000,[0,0,5,2000],600]  
-going_active_sequence = [[0,0,50,0],[0,0,1,200],[0,0,50,200]]
-idle_sequence   = [[1,0,1]]
-going_idle_sequence = [[50,0,50,0],[1,0,1,200],[50,0,50,200]]
 
 if last_row:
     rgbled.set_sequence(active_sequence)
@@ -109,7 +111,8 @@ while True:
             if last_row:
                 rgbled.set_sequence(going_idle_sequence)
                 last_row['finish'] = now
-                last_row.update()
+                last_row['minutes'] = '=(R[0]C[-1]-R[0]C[-2])*60*24';
+                last_row.update_or_append() # failover to append if update is blocked by Conflict error
                 last_row = None
             else:
                 last_project_index = None

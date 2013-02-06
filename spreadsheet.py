@@ -1,7 +1,9 @@
 import gaugette.oauth
 import gdata.service
 import datetime
+import time
 from functools import wraps
+
 import httplib # only for httplib.BadStatusLine definition
 
 class Spreadsheet:
@@ -29,8 +31,25 @@ class Spreadsheet:
                         raise
                 except httplib.BadStatusLine as error:
                     print "bad status line, retrying"
+                    # if we don't get a new gd_client here, we may end up with
+                    # infinite CannotSendRequests because the http connection
+                    # is in a bad state.
+                    # token expired, retrying
+                    # bad status line, retrying
+                    # cannot send request, retrying
+                    # cannot send request, retrying
+                    # ...
+                    gd_client = self.get_gd_client(force=True)
+                    time.sleep(1.0)
                     # this seems to happen after we are idle for a long time.
                     # Just retry, and don't decrement the retry count
+                except httplib.CannotSendRequest as error:
+                    print "cannot send request, retrying"
+                    gd_client = self.get_gd_client(force=True)
+                    time.sleep(1.0)
+                    # another error that happens after long idle.
+                    # I have seen 
+                    # token expired then bad status line then cannot send request serially
         return f_retry
 
     class Worksheet:
@@ -57,7 +76,7 @@ class Spreadsheet:
 
             def __setitem__(self, key, value):
                 self.data[key] = value
-            
+
             def update(self):
                 @self.spreadsheet.retry
                 def update_with_retry():
@@ -71,6 +90,18 @@ class Spreadsheet:
                     gd_client = self.spreadsheet.get_gd_client()
                     self.entry = gd_client.InsertRow(self.data, self.spreadsheet.spreadsheet_id, self.worksheet.worksheet_id)
                 append_with_retry()
+
+            def update_or_append(self):
+                try:
+                    self.update()
+                except gdata.service.RequestError as error:
+                    if error[0]['status'] == 409: #Conflict
+                        # seems someone is locking the last row 
+                        # preventing us from updating it, 
+                        # so retry by adding a new last row.
+                        self.append()
+                    else:
+                        raise
 
         #----------------------------------------------------------------------        
         
