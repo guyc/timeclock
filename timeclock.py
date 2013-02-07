@@ -43,6 +43,17 @@ rgbled.set_sequence(startup_sequence)
 SPREADSHEET_NAME     = 'TimeClock'
 SPREADSHEET_TEMPLATE = 'TimeClock.ods'
 ss = Spreadsheet()
+
+if not ss.oauth.has_token():
+    user_code = ss.oauth.get_user_code()
+    print "Go to %s and enter the code %s" % (ss.oauth.verification_url, user_code)
+    # need a font that will show us the full code without scrolling
+    from gaugette.fonts import arial_24
+    oled.ssd1306.clear_display()
+    oled.ssd1306.draw_text3(0,0,user_code,arial_24)
+    oled.ssd1306.display()
+    ss.oauth.get_new_token()  # this call will block until the code is entered
+
 if not ss.get_spreadsheet_by_name(SPREADSHEET_NAME):
     print "Creating new spreadsheet '%s'." % (SPREADSHEET_NAME)
     ss.create(SPREADSHEET_TEMPLATE, SPREADSHEET_NAME)
