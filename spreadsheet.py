@@ -1,5 +1,6 @@
 import gaugette.oauth
 import gdata.service
+import gdata.data
 import datetime
 import time
 from functools import wraps
@@ -39,12 +40,14 @@ class Spreadsheet:
                     # cannot send request, retrying
                     # cannot send request, retrying
                     # ...
+                    self.oauth.reset_connection()
                     gd_client = self.get_gd_client(force=True)
                     time.sleep(1.0)
                     # this seems to happen after we are idle for a long time.
                     # Just retry, and don't decrement the retry count
                 except httplib.CannotSendRequest as error:
                     print "cannot send request, retrying"
+                    self.oauth.reset_connection()
                     gd_client = self.get_gd_client(force=True)
                     time.sleep(1.0)
                     # another error that happens after long idle.
@@ -151,6 +154,7 @@ class Spreadsheet:
         self.oauth = gaugette.oauth.OAuth(self.CLIENT_ID, self.CLIENT_SECRET)
         self.gd_client = None
         self.worksheets_feed = None
+        self.spreadsheet_id = None
 
     def has_token(self):
         return self.oauth.has_token()
@@ -174,12 +178,12 @@ class Spreadsheet:
     def get_spreadsheets_feed(self):
 
         @self.retry
-        def get_worksheets_feed_with_retry():
+        def get_spreadsheets_feed_with_retry():
             gd_client = self.get_gd_client()
             return gd_client.GetSpreadsheetsFeed()
-        worksheets_feed = get_worksheets_feed_with_retry()
+        spreadsheets_feed = get_spreadsheets_feed_with_retry()
             
-        return worksheets_feed
+        return spreadsheets_feed
 
     def get_spreadsheet_by_name(self, name):
         for entry in self.get_spreadsheets_feed().entry:
@@ -251,7 +255,18 @@ class Spreadsheet:
 
     def worksheet(self, index=0):
         worksheets_feed = self.get_worksheets_feed()
-        #print worksheets_feed.entry[index]
         worksheet_id = worksheets_feed.entry[index].id.text.rsplit('/',1)[1]
         return self.Worksheet(self, worksheet_id)
         
+    def create(self, file_path, name):
+        docs_service = self.oauth.docs_service()
+        file_path = "TimeClock.ods"
+        media = gdata.data.MediaSource()
+        media.set_file_handle(file_path, 'application/x-vnd.oasis.opendocument.spreadsheet')
+        #media.set_file_handle(file_path, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        #media.set_file_handle(file_path, 'application/vnd.ms-excel')
+        entry = docs_service.Upload(media, name)
+
+        # This is NOT the same value you get from the spreadsheet feed,
+        # but is the same value you see in the web urls after ccc?key=<key>
+        self.spreadsheet_id = entry.resourceId.text.rsplit(':')[1]

@@ -40,10 +40,12 @@ oled.ssd1306.set_contrast(contrast)
 
 rgbled.set_sequence(startup_sequence)
 
-SPREADSHEET_NAME = "Punch Clock"
+SPREADSHEET_NAME     = 'TimeClock'
+SPREADSHEET_TEMPLATE = 'TimeClock.ods'
 ss = Spreadsheet()
 if not ss.get_spreadsheet_by_name(SPREADSHEET_NAME):
-    print "Spreadsheet %s not found." % name
+    print "Creating new spreadsheet '%s'." % (SPREADSHEET_NAME)
+    ss.create(SPREADSHEET_TEMPLATE, SPREADSHEET_NAME)
 
 time_worksheet = ss.worksheet(0)
 project_worksheet = ss.worksheet(1)
@@ -57,7 +59,7 @@ oled.set_list(project_names)
 last_row = time_worksheet.get_last_row()
 last_project_index = None
 
-if not last_row['finish']:
+if last_row and not last_row['finish']:
     # we have unfinished work!
     last_project = last_row['project']
     try:
@@ -111,6 +113,7 @@ while True:
             if last_row:
                 rgbled.set_sequence(going_idle_sequence)
                 last_row['finish'] = now
+                # Note this uses the obscure RC relative cell syntax which is automatically converted to normal spreadsheet notation
                 last_row['minutes'] = '=(R[0]C[-1]-R[0]C[-2])*60*24';
                 last_row.update_or_append() # failover to append if update is blocked by Conflict error
                 last_row = None
