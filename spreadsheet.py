@@ -94,6 +94,12 @@ class Spreadsheet:
                     self.entry = gd_client.InsertRow(self.data, self.spreadsheet.spreadsheet_id, self.worksheet.worksheet_id)
                 append_with_retry()
 
+            def get_attribute(self, field, default=""):
+                if field in self.data:
+                   return self.data[field]
+                else:
+                   return default
+            
             def update_or_append(self):
                 try:
                     self.update()
