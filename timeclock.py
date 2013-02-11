@@ -63,8 +63,16 @@ project_worksheet = ss.worksheet(1)
 projects = project_worksheet.get_rows()
 project_names = []
 for project in projects:
-    project_names.append(project['name'])
+    name = project.get_attribute('name', None)
+    if name:
+        color = project.get_attribute('colour')
+        hide = project.get_attribute('hide')
 
+        if hide and len(hide) and hide.lower()[0]=='y':
+            print "'%s' is hidden" % (name)
+        else:
+            project_names.append(project['name'])
+    
 oled.set_list(project_names)
     
 last_row = time_worksheet.get_last_row()
@@ -135,7 +143,7 @@ while True:
             if selected != last_project_index:
                 rgbled.set_sequence(going_active_sequence)
                 last_row = time_worksheet.Row(time_worksheet)
-                last_row['project'] = projects[selected]['name']
+                last_row['project'] = project_names[selected]
                 last_row['start'] = now
                 last_row.append()
                 last_project_index = selected
