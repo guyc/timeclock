@@ -22,7 +22,7 @@ class Spreadsheet:
                 except gdata.service.RequestError as error:
                     if error[0]['status'] == 401:
                         # retry on timeout
-                        print "token expired, retrying"
+                        print("token expired, retrying")
                         # note that Spreadsheet.refresh_token also invokes
                         # this retry wrapper because it can get BadStatusLine errors.
                         self.refresh_token()
@@ -31,7 +31,7 @@ class Spreadsheet:
                     else:
                         raise
                 except httplib.BadStatusLine as error:
-                    print "bad status line, retrying"
+                    print("bad status line, retrying")
                     # if we don't get a new gd_client here, we may end up with
                     # infinite CannotSendRequests because the http connection
                     # is in a bad state.
@@ -46,7 +46,7 @@ class Spreadsheet:
                     # this seems to happen after we are idle for a long time.
                     # Just retry, and don't decrement the retry count
                 except httplib.CannotSendRequest as error:
-                    print "cannot send request, retrying"
+                    print("cannot send request, retrying")
                     self.oauth.reset_connection()
                     gd_client = self.get_gd_client(force=True)
                     time.sleep(1.0)
@@ -196,8 +196,6 @@ class Spreadsheet:
             if name == entry.title.text:
                 self.spreadsheet_id = entry.id.text.rsplit('/',1)[1]
                 return self.spreadsheet_id
-            else:
-                print [name, entry.title.text]
         return None
 
     def get_worksheets_feed(self):
