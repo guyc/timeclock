@@ -1,0 +1,167 @@
+{
+  "properties": {
+    "title": "Timesheet",
+    "timeZone": "Australia\/Brisbane",
+    "locale": "en_AU"
+  },
+  "sheets": [
+    {
+      "properties": {
+        "title": "Times",
+        "index": 0,
+        "sheetId": 0,
+        "gridProperties": {
+          "rowCount": 100,
+          "columnCount": 10
+        }
+      },
+      "data": [
+        {
+          "rowData": [
+            {
+              "values": [
+                {
+                  "userEnteredValue": {
+                    "stringValue": "Project"
+                  },
+                  "userEnteredFormat": {
+                    "borders": {
+                      "bottom": {
+                        "style": "SOLID",
+                        "width": 1,
+                        "color": {
+
+                        }
+                      }
+                    },
+                    "textFormat": {
+                      "bold": true
+                    }
+                  }
+                },
+
+                {
+                  "userEnteredValue": {
+                    "stringValue": "Start"
+                  },
+                  "userEnteredFormat": {
+                    "borders": {
+                      "bottom": {
+                        "style": "SOLID",
+                        "width": 1,
+                        "color": {
+
+                        }
+                      }
+                    },
+                    "textFormat": {
+                      "bold": true
+                    }
+                  }
+                },
+
+                {
+                  "userEnteredValue": {
+                    "stringValue": "Finish"
+                  },
+                  "userEnteredFormat": {
+                    "borders": {
+                      "bottom": {
+                        "style": "SOLID",
+                        "width": 1,
+                        "color": {
+
+                        }
+                      }
+                    },
+                    "textFormat": {
+                      "bold": true
+                    }
+                  }
+                },
+
+                {
+                  "userEnteredValue": {
+                    "stringValue": "Minutes"
+                  },
+                  "userEnteredFormat": {
+                    "borders": {
+                      "bottom": {
+                        "style": "SOLID",
+                        "width": 1,
+                        "color": {
+
+                        }
+                      }
+                    },
+                    "textFormat": {
+                      "bold": true
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "properties": {
+        "title": "Projects",
+        "index": 1,
+        "sheetId": 1,
+        "gridProperties": {
+          "rowCount": 100,
+          "columnCount": 10
+        }
+      },
+      "data": [
+        {
+          "rowData": [
+            {
+              "values": [
+                {
+                  "userEnteredValue": {
+                    "stringValue": "Name"
+                  },
+                  "userEnteredFormat": {
+                    "borders": {
+                      "bottom": {
+                        "style": "SOLID",
+                        "width": 1,
+                        "color": {
+
+                        }
+                      }
+                    },
+                    "textFormat": {
+                      "bold": true
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "userEnteredValue": {
+                    "stringValue": "Gaugette"
+                  }
+                }
+              ]
+            },
+            {
+              "values": [
+                {
+                  "userEnteredValue": {
+                    "stringValue": "Welcome"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
