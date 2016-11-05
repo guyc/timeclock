@@ -138,6 +138,7 @@ def main():
             if not switch_state:
                 selected = oled.list.align()
 
+                start_line = active_row_index == None or selected != active_project_index
                 # If there is an open record end it
                 if active_row_index:
                     rgbled.set_sequence(going_idle_sequence)
@@ -148,7 +149,7 @@ def main():
                     active_row_index = None
 
                 # if either there was an open row, or a new project is selected
-                if selected != active_project_index:
+                if start_line:
                     active_project_index = selected
                     rgbled.set_sequence(going_active_sequence)
                     project_name = project_names[active_project_index]
