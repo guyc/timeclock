@@ -1,13 +1,14 @@
-import gaugette.oauth
 import datetime
 import httplib2
 import os
 import json
 import re
 from apiclient import discovery
+from functools import wraps
 
 # https://developers.google.com/sheets/reference/rest/v4/spreadsheets/get
 class Spreadsheet:
+
     def __init__(self, credentials):
         self.id_file = '.spreadsheets.json'
         self.http = credentials.authorize(httplib2.Http())
@@ -46,23 +47,33 @@ class Spreadsheet:
     def create(self, name, template):
         with open(template) as template_file:
             body = json.load(template_file)
-        result = self.ss.create(body=body).execute()
+        @self.retry
+        def create_with_retry():
+            return self.ss.create(body=body).execute()
+        result = create_with_retry()
         return result['spreadsheetId']
 
     def get_range(self, range):
-        result = self.ss.values().get(spreadsheetId=self.id, range=range).execute()
+        @self.retry
+        def get_with_retry():
+            return self.ss.values().get(spreadsheetId=self.id, range=range).execute()
+        result = get_with_retry()
         values = result.get('values', [])
         return values
 
     def set_range(self, range, values):
         body = {"values":values}
-        result = self.ss.values().update(spreadsheetId=self.id, range=range, valueInputOption="USER_ENTERED", body=body).execute()
-        return result
+        @self.retry
+        def update_with_retry():
+            return self.ss.values().update(spreadsheetId=self.id, range=range, valueInputOption="USER_ENTERED", body=body).execute()
+        return update_with_retry()
 
     def append_range(self, range, values):
         body = {"values":values}
-        result = self.ss.values().append(spreadsheetId=self.id, range=range, valueInputOption="USER_ENTERED", body=body).execute()
-        return result
+        @self.retry
+        def append_with_retry():
+            return self.ss.values().append(spreadsheetId=self.id, range=range, valueInputOption="USER_ENTERED", body=body).execute()
+        return append_with_retry()
 
     def parse_range(self, range_name):
         range = None
@@ -77,3 +88,18 @@ class Spreadsheet:
                 "row2": int(matches.group(6))
             })
         return range
+
+    def retry(self, f):
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            retry = 1
+            while retry >= 0:
+                try:
+                    return f(*args, **kwargs)
+                except httplib.BadStatusLine as error:
+                    print("bad status line, retrying")
+                    time.sleep(1.0)
+                    # this seems to happen after we are idle for a long time.
+                    # Just recreate the http client, retry, and don't decrement the retry count
+                    self.http = credentials.authorize(httplib2.Http())
+        return f_retry

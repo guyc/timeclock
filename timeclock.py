@@ -113,7 +113,7 @@ def main():
 
     while True:
         time.sleep(0.01)
-        delta = encoder.get_delta()
+        delta = encoder.get_steps()
 
         if delta != 0:
             oled.list.scroll(delta*2)
