@@ -92,14 +92,18 @@ class Spreadsheet:
     def retry(self, f):
         @wraps(f)
         def f_retry(*args, **kwargs):
-            retry = 1
+            retry = 5
             while retry >= 0:
                 try:
                     return f(*args, **kwargs)
-                except httplib.BadStatusLine as error:
+                except httplib2.http.client.BadStatusLine as error:
                     print("bad status line, retrying")
                     time.sleep(1.0)
                     # this seems to happen after we are idle for a long time.
                     # Just recreate the http client, retry, and don't decrement the retry count
                     self.http = credentials.authorize(httplib2.Http())
+                except:
+                    print("Unexpected error:", sys.exc_info()[0])
+                    retry -= 1
+                    time.sleep(1.0)
         return f_retry
